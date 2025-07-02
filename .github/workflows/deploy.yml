@@ -11,17 +11,23 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Debug secrets
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USER: ${{ secrets.EC2_USER }}
+      run: |
+        echo "EC2_HOST is '$EC2_HOST'"
+        echo "EC2_USER is '$EC2_USER'"
+
     - name: Deploy app on EC2
       env:
         EC2_HOST: ${{ secrets.EC2_HOST }}
         EC2_USER: ${{ secrets.EC2_USER }}
         EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
       run: |
-        # Guardar la clave SSH en un archivo temporal
         echo "$EC2_SSH_KEY" > temp_key.pem
         chmod 600 temp_key.pem
 
-        # Ejecutar comandos remotos en EC2
         ssh -o StrictHostKeyChecking=no -i temp_key.pem $EC2_USER@$EC2_HOST << EOF
           set -e
           if [ ! -d "app-directory" ]; then
@@ -33,5 +39,4 @@ jobs:
           docker-compose up -d --build
         EOF
 
-        # Eliminar la clave temporal
         rm -f temp_key.pem
